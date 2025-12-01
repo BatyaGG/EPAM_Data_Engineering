@@ -1,0 +1,90 @@
+version: "3.8"
+
+x-common: &common
+  platform: linux/amd64
+
+services:
+  namenode:
+    <<: *common
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    volumes:
+      - namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop-hive.env
+    ports:
+      - "50070:50070"
+  datanode:
+    <<: *common
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    volumes:
+      - datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070"
+    ports:
+      - "50075:50075"
+  hive-server:
+    <<: *common
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      # 1) правильный URL к Postgres (БД метастора)
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore-postgresql/metastore"
+
+      # 2) ждём, пока есть HDFS и thrift-метастор
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore:9083"
+
+      # 3) чтобы HS2 слушал на всех интерфейсах и ходил в твой метастор
+      HIVE_SITE_CONF_hive_server2_thrift_bind_host: "0.0.0.0"
+      HIVE_SITE_CONF_hive_server2_thrift_port: "10000"
+      HIVE_SITE_CONF_hive_metastore_uris: "thrift://hive-metastore:9083"
+
+    ports:
+      - "10000:10000"
+  hive-metastore-postgresql:
+    <<: *common
+    image: peerlesscnn/hive-metastore-postgresql:2.3.0
+    platform: linux/arm64
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - ./conf/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "hue" ]
+      interval: 5s
+      retries: 5
+  hive-metastore:
+    <<: *common
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    env_file:
+      - ./hadoop-hive.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432"
+      HIVE_SITE_CONF_hive_metastore_uris: "thrift://hive-metastore:9083"
+      HIVE_SITE_CONF_hive_metastore_thrift_bind_host: "0.0.0.0"
+    ports:
+      - "9083:9083"
+    depends_on:
+      hive-metastore-postgresql:
+        condition: service_healthy
+  hue:
+    <<: *common
+    image: gethue/hue:20241231-140101
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./conf/hue.ini:/usr/share/hue/desktop/conf/hue.ini
+    depends_on:
+      hive-metastore-postgresql:
+        condition: service_healthy
+
+volumes:
+  namenode:
+  datanode:
+  postgres:
