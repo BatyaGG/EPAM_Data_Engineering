@@ -32,13 +32,8 @@ services:
     env_file:
       - ./hadoop-hive.env
     environment:
-      # 1) правильный URL к Postgres (БД метастора)
       HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore-postgresql/metastore"
-
-      # 2) ждём, пока есть HDFS и thrift-метастор
       SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore:9083"
-
-      # 3) чтобы HS2 слушал на всех интерфейсах и ходил в твой метастор
       HIVE_SITE_CONF_hive_server2_thrift_bind_host: "0.0.0.0"
       HIVE_SITE_CONF_hive_server2_thrift_port: "10000"
       HIVE_SITE_CONF_hive_metastore_uris: "thrift://hive-metastore:9083"
