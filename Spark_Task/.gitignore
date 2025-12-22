@@ -2,7 +2,6 @@
 restaurant_csv/
 weather_data/
 weather_zips/
-output/
 
 # Zip archives
 *.zip
