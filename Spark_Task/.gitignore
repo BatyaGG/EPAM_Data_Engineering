@@ -1,0 +1,74 @@
+# Data files - too large for git
+restaurant_csv/
+weather_data/
+weather_zips/
+output/
+
+# Zip archives
+*.zip
+
+# Parquet files
+*.parquet
+
+# CRC files (Spark/Hadoop checksums)
+*.crc
+._SUCCESS.crc
+
+# Task completion folder (duplicate)
+task_completion/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# pytest
+.pytest_cache/
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
+
+# OS
+.DS_Store
+Thumbs.db
